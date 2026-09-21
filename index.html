@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pulizie Bar</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f3f4f6;
+  color: #222;
+}
+
+header {
+  background: #111;
+  color: white;
+  padding: 25px 15px;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+header p {
+  margin: 8px 0 0;
+  color: #ccc;
+}
+
+.container {
+  max-width: 900px;
+  margin: 25px auto;
+  padding: 0 15px;
+}
+
+.week {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.day {
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.day h2 {
+  margin-top: 0;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+.task {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 14px;
+  margin: 10px 0;
+  background: #fafafa;
+}
+
+.task.done {
+  background: #e8f7e8;
+  border-color: #65b765;
+}
+
+.task-name {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+button {
+  border: none;
+  border-radius: 7px;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.done-btn {
+  background: #198754;
+  color: white;
+}
+
+.undo-btn {
+  background: #dc3545;
+  color: white;
+}
+
+input {
+  padding: 9px;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+  margin-right: 5px;
+  width: 180px;
+}
+
+.person {
+  margin-top: 8px;
+  color: #555;
+  font-size: 14px;
+}
+
+.reset {
+  display: block;
+  margin: 25px auto;
+  background: #111;
+  color: white;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🧹 PULIZIE BAR</h1>
+  <p>Registro settimanale delle pulizie</p>
+</header>
+
+<div class="container">
+
+  <div class="week">
+    📅 Settimana: <span id="weekNumber"></span>
+  </div>
+
+  <div id="cleaningList"></div>
+
+  <button class="reset" onclick="resetWeek()">
+    🔄 Azzera settimana
+  </button>
+
+</div>
+
+<script>
+
+const pulizie = {
+
+  "Lunedì": [
+    "Frigo Creme",
+    "Frigo Bibite",
+    "Riordinare Mobile Nero",
+    "Pulire microonde"
+  ],
+
+  "Martedì": [
+    "Spolverare mensole interne ed esterne",
+    "Mensole alte e scritta TORALDO",
+    "Frighi esterni"
+  ],
+
+  "Mercoledì": [
+    "Forno e teglie",
+    "Frigo latte",
+    "Frigo sotto lo spremiagrumi",
+    "Pulire e ordinare sotto i lavandini e il deposito bibite",
+    "Depurazione lavastoviglie"
+  ],
+
+  "Giovedì": [
+    "Pulire bancone acciaio e mensole vetro",
+    "Pulire a fondo bancone di marmo con detergente fino a terra",
+    "Pulizie angoli e fughe delle pedane"
+  ],
+
+  "Venerdì": [
+    "Pulizia a fondo dei bidoni esterni ed interni",
+    "Pulizia angolo creme"
+  ],
+
+  "Sabato": [
+    "Pulizia cella e deposito",
+    "Pulizia del cassetto sotto la macchina del caffè"
+  ],
+
+  "Domenica": [
+    "Forno e teglie",
+    "Pulire a fondo, smontando, il carrello nero",
+    "Tazze e piattini con la candeggina",
+    "Pulizia del piano delle tazzine",
+    "Depurazione lavastoviglie"
+  ]
+
+};
+
+
+// Calcola la settimana corrente
+function getWeekKey() {
+
+  const oggi = new Date();
+
+  const anno = oggi.getFullYear();
+
+  const inizioAnno = new Date(anno, 0, 1);
+
+  const differenza =
+    Math.floor(
+      (oggi - inizioAnno) / (1000 * 60 * 60 * 24)
+    );
+
+  const settimana =
+    Math.ceil((differenza + inizioAnno.getDay() + 1) / 7);
+
+  return anno + "-W" + settimana;
+}
+
+
+// Mostra la settimana
+document.getElementById("weekNumber").textContent =
+  getWeekKey();
+
+
+function caricaDati() {
+
+  const datiSalvati =
+    JSON.parse(localStorage.getItem("pulizie-" + getWeekKey()) || "{}");
+
+  const contenitore =
+    document.getElementById("cleaningList");
+
+  contenitore.innerHTML = "";
+
+
+  Object.keys(pulizie).forEach(giorno => {
+
+    const day = document.createElement("div");
+
+    day.className = "day";
+
+    day.innerHTML = `<h2>📅 ${giorno}</h2>`;
+
+
+    pulizie[giorno].forEach((attivita, indice) => {
+
+      const chiave =
+        giorno + "-" + indice;
+
+      const dati =
+        datiSalvati[chiave];
+
+
+      const task =
+        document.createElement("div");
+
+      task.className = "task";
+
+      if (dati) {
+        task.classList.add("done");
+      }
+
+
+      task.innerHTML = `
+        <div class="task-name">
+          ${attivita}
+        </div>
+
+        ${
+          dati
+          ?
+          `
+          <div class="person">
+            ✅ Pulito da: <strong>${dati.nome}</strong>
+            <br>
+            🕒 ${dati.data}
+          </div>
+
+          <br>
+
+          <button
+            class="undo-btn"
+            onclick="annulla('${chiave}')">
+            Annulla
+          </button>
+          `
+          :
+          `
+          <input
+            type="text"
+            id="nome-${chiave}"
+            placeholder="Nome della persona">
+
+          <button
+            class="done-btn"
+            onclick="segna('${chiave}')">
+            ✅ Segna pulito
+          </button>
+          `
+        }
+      `;
+
+      day.appendChild(task);
+
+    });
+
+    contenitore.appendChild(day);
+
+  });
+
+}
+
+
+function segna(chiave) {
+
+  const input =
+    document.getElementById("nome-" + chiave);
+
+  const nome =
+    input.value.trim();
+
+
+  if (!nome) {
+
+    alert("Inserisci il nome della persona.");
+
+    return;
+  }
+
+
+  const chiaveSettimana =
+    "pulizie-" + getWeekKey();
+
+
+  const dati =
+    JSON.parse(
+      localStorage.getItem(chiaveSettimana) || "{}"
+    );
+
+
+  dati[chiave] = {
+
+    nome: nome,
+
+    data:
+      new Date().toLocaleString("it-IT")
+
+  };
+
+
+  localStorage.setItem(
+    chiaveSettimana,
+    JSON.stringify(dati)
+  );
+
+
+  caricaDati();
+
+}
+
+
+function annulla(chiave) {
+
+  const chiaveSettimana =
+    "pulizie-" + getWeekKey();
+
+
+  const dati =
+    JSON.parse(
+      localStorage.getItem(chiaveSettimana) || "{}"
+    );
+
+
+  delete dati[chiave];
+
+
+  localStorage.setItem(
+    chiaveSettimana,
+    JSON.stringify(dati)
+  );
+
+
+  caricaDati();
+
+}
+
+
+function resetWeek() {
+
+  if (
+    confirm(
+      "Vuoi davvero cancellare tutte le pulizie di questa settimana?"
+    )
+  ) {
+
+    localStorage.removeItem(
+      "pulizie-" + getWeekKey()
+    );
+
+    caricaDati();
+
+  }
+
+}
+
+
+caricaDati();
+
+</script>
+
+</body>
+</html>
