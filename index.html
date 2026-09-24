@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pulizie Bar</title>
+<title>PULIZIE BAR</title>
 
 <style>
 * {
@@ -20,7 +20,7 @@ body {
 header {
   background: #111;
   color: white;
-  padding: 25px 15px;
+  padding: 22px 15px;
   text-align: center;
 }
 
@@ -30,94 +30,126 @@ header h1 {
 }
 
 header p {
-  margin: 8px 0 0;
-  color: #ccc;
+  margin: 7px 0 0;
+  opacity: 0.75;
 }
 
 .container {
-  max-width: 900px;
-  margin: 25px auto;
+  max-width: 700px;
+  margin: 20px auto;
   padding: 0 15px;
 }
 
-.week {
+.card {
   background: white;
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  text-align: center;
+  border-radius: 15px;
+  padding: 18px;
+  margin-bottom: 15px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+}
+
+.section-title {
+  font-size: 20px;
   font-weight: bold;
-}
-
-.day {
-  background: white;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.day h2 {
-  margin-top: 0;
-  border-bottom: 2px solid #eee;
-  padding-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .task {
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 14px;
-  margin: 10px 0;
-  background: #fafafa;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 5px;
+  border-bottom: 1px solid #eee;
 }
 
-.task.done {
-  background: #e8f7e8;
-  border-color: #65b765;
+.task:last-child {
+  border-bottom: none;
+}
+
+.task input {
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.task-info {
+  flex: 1;
 }
 
 .task-name {
   font-weight: bold;
-  margin-bottom: 10px;
+}
+
+.task-status {
+  font-size: 13px;
+  color: #777;
+  margin-top: 4px;
+}
+
+.completed .task-name {
+  text-decoration: line-through;
+  color: #888;
 }
 
 button {
   border: none;
-  border-radius: 7px;
-  padding: 9px 14px;
+  border-radius: 10px;
+  padding: 12px 16px;
   cursor: pointer;
   font-weight: bold;
 }
 
-.done-btn {
-  background: #198754;
+.reset {
+  background: #111;
   color: white;
 }
 
-.undo-btn {
-  background: #dc3545;
-  color: white;
+.history {
+  background: #eee;
+  color: #222;
+  margin-left: 8px;
 }
 
-input {
-  padding: 9px;
-  border: 1px solid #ccc;
-  border-radius: 7px;
-  margin-right: 5px;
-  width: 180px;
+.progress {
+  height: 12px;
+  background: #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 10px;
 }
 
-.person {
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: #22c55e;
+  transition: width 0.3s;
+}
+
+.progress-text {
   margin-top: 8px;
-  color: #555;
+  font-weight: bold;
+}
+
+.history-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
   font-size: 14px;
 }
 
-.reset {
-  display: block;
-  margin: 25px auto;
-  background: #111;
-  color: white;
+.empty {
+  color: #777;
+  text-align: center;
+  padding: 15px;
+}
+
+@media (max-width: 500px) {
+  header h1 {
+    font-size: 24px;
+  }
+
+  .container {
+    margin-top: 12px;
+  }
 }
 </style>
 </head>
@@ -126,284 +158,292 @@ input {
 
 <header>
   <h1>🧹 PULIZIE BAR</h1>
-  <p>Registro settimanale delle pulizie</p>
+  <p>Controllo settimanale delle pulizie</p>
 </header>
 
 <div class="container">
 
-  <div class="week">
-    📅 Settimana: <span id="weekNumber"></span>
+  <div class="card">
+    <div class="section-title">📅 Settimana corrente</div>
+
+    <div id="weekInfo"></div>
+
+    <div class="progress">
+      <div id="progressBar" class="progress-bar"></div>
+    </div>
+
+    <div id="progressText" class="progress-text">
+      0 / 0 completate
+    </div>
   </div>
 
-  <div id="cleaningList"></div>
+  <div class="card">
+    <div class="section-title">🧽 Pulizie</div>
+    <div id="tasks"></div>
+  </div>
 
-  <button class="reset" onclick="resetWeek()">
-    🔄 Azzera settimana
-  </button>
+  <div class="card">
+    <button class="reset" onclick="resetWeek()">
+      🔄 Nuova settimana
+    </button>
+
+    <button class="history" onclick="showHistory()">
+      📋 Storico
+    </button>
+  </div>
+
+  <div class="card" id="historyCard" style="display:none;">
+    <div class="section-title">📋 Storico</div>
+    <div id="history"></div>
+  </div>
 
 </div>
 
 <script>
 
-const pulizie = {
+const TASKS = [
+  "Pulire il pavimento",
+  "Pulire i tavoli",
+  "Pulire il bancone",
+  "Pulire i bagni",
+  "Pulire la cucina",
+  "Pulire il frigorifero",
+  "Pulire le vetrate",
+  "Svuotare i cestini"
+];
 
-  "Lunedì": [
-    "Frigo Creme",
-    "Frigo Bibite",
-    "Riordinare Mobile Nero",
-    "Pulire microonde"
-  ],
-
-  "Martedì": [
-    "Spolverare mensole interne ed esterne",
-    "Mensole alte e scritta TORALDO",
-    "Frighi esterni"
-  ],
-
-  "Mercoledì": [
-    "Forno e teglie",
-    "Frigo latte",
-    "Frigo sotto lo spremiagrumi",
-    "Pulire e ordinare sotto i lavandini e il deposito bibite",
-    "Depurazione lavastoviglie"
-  ],
-
-  "Giovedì": [
-    "Pulire bancone acciaio e mensole vetro",
-    "Pulire a fondo bancone di marmo con detergente fino a terra",
-    "Pulizie angoli e fughe delle pedane"
-  ],
-
-  "Venerdì": [
-    "Pulizia a fondo dei bidoni esterni ed interni",
-    "Pulizia angolo creme"
-  ],
-
-  "Sabato": [
-    "Pulizia cella e deposito",
-    "Pulizia del cassetto sotto la macchina del caffè"
-  ],
-
-  "Domenica": [
-    "Forno e teglie",
-    "Pulire a fondo, smontando, il carrello nero",
-    "Tazze e piattini con la candeggina",
-    "Pulizia del piano delle tazzine",
-    "Depurazione lavastoviglie"
-  ]
-
+let data = JSON.parse(localStorage.getItem("pulizieBar")) || {
+  week: "",
+  completed: {},
+  history: []
 };
 
+function getMonday(date = new Date()) {
+  const d = new Date(date);
+  const day = d.getDay();
 
-// Calcola la settimana corrente
-function getWeekKey() {
+  const diff = day === 0 ? -6 : 1 - day;
 
-  const oggi = new Date();
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
 
-  const anno = oggi.getFullYear();
-
-  const inizioAnno = new Date(anno, 0, 1);
-
-  const differenza =
-    Math.floor(
-      (oggi - inizioAnno) / (1000 * 60 * 60 * 24)
-    );
-
-  const settimana =
-    Math.ceil((differenza + inizioAnno.getDay() + 1) / 7);
-
-  return anno + "-W" + settimana;
+  return d;
 }
 
+function getWeekKey() {
+  const monday = getMonday();
 
-// Mostra la settimana
-document.getElementById("weekNumber").textContent =
-  getWeekKey();
+  return monday.getFullYear() + "-" +
+    String(monday.getMonth() + 1).padStart(2, "0") + "-" +
+    String(monday.getDate()).padStart(2, "0");
+}
 
+function formatDate(date) {
+  return date.toLocaleDateString("it-IT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+}
 
-function caricaDati() {
+function checkNewWeek() {
 
-  const datiSalvati =
-    JSON.parse(localStorage.getItem("pulizie-" + getWeekKey()) || "{}");
+  const currentWeek = getWeekKey();
 
-  const contenitore =
-    document.getElementById("cleaningList");
+  if (data.week !== currentWeek) {
 
-  contenitore.innerHTML = "";
+    if (data.week && Object.keys(data.completed).length > 0) {
 
+      data.history.push({
+        week: data.week,
+        completed: data.completed,
+        savedAt: new Date().toLocaleString("it-IT")
+      });
 
-  Object.keys(pulizie).forEach(giorno => {
+    }
 
-    const day = document.createElement("div");
+    data.week = currentWeek;
+    data.completed = {};
 
-    day.className = "day";
+    localStorage.setItem(
+      "pulizieBar",
+      JSON.stringify(data)
+    );
+  }
+}
 
-    day.innerHTML = `<h2>📅 ${giorno}</h2>`;
+function render() {
 
+  checkNewWeek();
 
-    pulizie[giorno].forEach((attivita, indice) => {
+  const monday = getMonday();
+  const sunday = new Date(monday);
 
-      const chiave =
-        giorno + "-" + indice;
+  sunday.setDate(monday.getDate() + 6);
 
-      const dati =
-        datiSalvati[chiave];
+  document.getElementById("weekInfo").innerHTML =
+    "Da <b>" + formatDate(monday) +
+    "</b> a <b>" + formatDate(sunday) + "</b>";
 
+  const tasksContainer =
+    document.getElementById("tasks");
 
-      const task =
-        document.createElement("div");
+  tasksContainer.innerHTML = "";
 
-      task.className = "task";
+  TASKS.forEach((task, index) => {
 
-      if (dati) {
-        task.classList.add("done");
-      }
+    const completed = data.completed[index];
 
+    const div = document.createElement("div");
 
-      task.innerHTML = `
-        <div class="task-name">
-          ${attivita}
+    div.className =
+      "task " + (completed ? "completed" : "");
+
+    div.innerHTML = `
+      <input
+        type="checkbox"
+        ${completed ? "checked" : ""}
+        onchange="toggleTask(${index})"
+      >
+
+      <div class="task-info">
+        <div class="task-name">${task}</div>
+
+        <div class="task-status">
+          ${
+            completed
+            ? "✅ Completata: " + completed.time
+            : "⏳ Da completare"
+          }
         </div>
+      </div>
+    `;
 
-        ${
-          dati
-          ?
-          `
-          <div class="person">
-            ✅ Pulito da: <strong>${dati.nome}</strong>
-            <br>
-            🕒 ${dati.data}
-          </div>
-
-          <br>
-
-          <button
-            class="undo-btn"
-            onclick="annulla('${chiave}')">
-            Annulla
-          </button>
-          `
-          :
-          `
-          <input
-            type="text"
-            id="nome-${chiave}"
-            placeholder="Nome della persona">
-
-          <button
-            class="done-btn"
-            onclick="segna('${chiave}')">
-            ✅ Segna pulito
-          </button>
-          `
-        }
-      `;
-
-      day.appendChild(task);
-
-    });
-
-    contenitore.appendChild(day);
-
+    tasksContainer.appendChild(div);
   });
 
+  updateProgress();
 }
 
+function toggleTask(index) {
 
-function segna(chiave) {
+  if (data.completed[index]) {
 
-  const input =
-    document.getElementById("nome-" + chiave);
+    delete data.completed[index];
 
-  const nome =
-    input.value.trim();
+  } else {
 
+    data.completed[index] = {
+      time: new Date().toLocaleString("it-IT")
+    };
+  }
 
-  if (!nome) {
+  localStorage.setItem(
+    "pulizieBar",
+    JSON.stringify(data)
+  );
 
-    alert("Inserisci il nome della persona.");
+  render();
+}
+
+function updateProgress() {
+
+  const total = TASKS.length;
+
+  const done = Object.keys(data.completed).length;
+
+  const percentage =
+    total === 0 ? 0 : (done / total) * 100;
+
+  document.getElementById("progressBar")
+    .style.width = percentage + "%";
+
+  document.getElementById("progressText")
+    .textContent =
+      done + " / " + total + " completate";
+}
+
+function resetWeek() {
+
+  if (!confirm(
+    "Vuoi iniziare una nuova settimana? " +
+    "Le attività completate verranno salvate nello storico."
+  )) {
+    return;
+  }
+
+  if (data.week && Object.keys(data.completed).length > 0) {
+
+    data.history.push({
+      week: data.week,
+      completed: data.completed,
+      savedAt: new Date().toLocaleString("it-IT")
+    });
+  }
+
+  data.week = getWeekKey();
+  data.completed = {};
+
+  localStorage.setItem(
+    "pulizieBar",
+    JSON.stringify(data)
+  );
+
+  render();
+}
+
+function showHistory() {
+
+  const card =
+    document.getElementById("historyCard");
+
+  const history =
+    document.getElementById("history");
+
+  card.style.display =
+    card.style.display === "none"
+    ? "block"
+    : "none";
+
+  history.innerHTML = "";
+
+  if (data.history.length === 0) {
+
+    history.innerHTML =
+      '<div class="empty">Nessuno storico disponibile.</div>';
 
     return;
   }
 
+  [...data.history]
+    .reverse()
+    .forEach(item => {
 
-  const chiaveSettimana =
-    "pulizie-" + getWeekKey();
+      const completedCount =
+        Object.keys(item.completed || {}).length;
 
+      const div =
+        document.createElement("div");
 
-  const dati =
-    JSON.parse(
-      localStorage.getItem(chiaveSettimana) || "{}"
-    );
+      div.className = "history-item";
 
+      div.innerHTML =
+        "<b>Settimana: " +
+        item.week +
+        "</b><br>" +
+        "Pulizie completate: " +
+        completedCount +
+        " / " +
+        TASKS.length +
+        "<br>" +
+        "Registrata: " +
+        item.savedAt;
 
-  dati[chiave] = {
-
-    nome: nome,
-
-    data:
-      new Date().toLocaleString("it-IT")
-
-  };
-
-
-  localStorage.setItem(
-    chiaveSettimana,
-    JSON.stringify(dati)
-  );
-
-
-  caricaDati();
-
+      history.appendChild(div);
+    });
 }
 
-
-function annulla(chiave) {
-
-  const chiaveSettimana =
-    "pulizie-" + getWeekKey();
-
-
-  const dati =
-    JSON.parse(
-      localStorage.getItem(chiaveSettimana) || "{}"
-    );
-
-
-  delete dati[chiave];
-
-
-  localStorage.setItem(
-    chiaveSettimana,
-    JSON.stringify(dati)
-  );
-
-
-  caricaDati();
-
-}
-
-
-function resetWeek() {
-
-  if (
-    confirm(
-      "Vuoi davvero cancellare tutte le pulizie di questa settimana?"
-    )
-  ) {
-
-    localStorage.removeItem(
-      "pulizie-" + getWeekKey()
-    );
-
-    caricaDati();
-
-  }
-
-}
-
-
-caricaDati();
+render();
 
 </script>
 
